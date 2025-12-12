@@ -185,6 +185,45 @@
   }
 }
 
+/* Audio slider styling */
+input[type="range"].slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 4px;
+  outline: none;
+}
+
+input[type="range"].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #000;
+  cursor: pointer;
+  margin-top: -5px;
+}
+
+input[type="range"].slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #000;
+  cursor: pointer;
+  border: none;
+}
+
+input[type="range"].slider:disabled::-webkit-slider-thumb {
+  background: #999;
+  cursor: not-allowed;
+}
+
+input[type="range"].slider:disabled::-moz-range-thumb {
+  background: #999;
+  cursor: not-allowed;
+}
+
 html {
   font-size: var(--font-size);
 }
