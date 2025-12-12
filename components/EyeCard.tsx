@@ -617,7 +617,7 @@ export function EyeCard() {
       </div>
 
       {/* Card Container - Match Main card height on mobile */}
-      <div className={`relative w-full bg-[var(--cream-background)] rounded-lg ${activeCard === "bio" && !isMobile ? '' : 'overflow-hidden'}`} style={{ maxHeight: isMobile ? '85vh' : 'none' }}>
+      <div className={`relative w-full bg-[var(--cream-background)] ${activeCard === "bio" ? 'rounded-lg' : ''} ${activeCard === "bio" && !isMobile ? '' : 'overflow-hidden'}`} style={{ maxHeight: isMobile ? '85vh' : 'none' }}>
         {/* Main Card */}
         <div 
           ref={mainCardRef}
