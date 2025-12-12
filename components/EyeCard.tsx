@@ -28,7 +28,8 @@ function Monster() {
   return (
     <div
       className="bg-[var(--cookie-monster-blue)] relative shrink-0 aspect-square w-full overflow-hidden cursor-pointer"
-      data-name="monster"
+      data-name
+      ="monster"
       onClick={handleClick}
     >
       {page === "image" && (
@@ -371,7 +372,7 @@ function InfoPage() {
         <p className="mb-3 sm:mb-4">
           <a href="https://drive.google.com/drive/folders/1sYDPSZn9AQMzLSzbr4ClAb7SZ3cqhQTJ?usp=sharing" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600 transition-colors">GOOGLE DRIVE</a>
         </p>
-        <p className="mb-0">EMAIL : haanmusic00@gmail.com</p>
+        <p className="mb-0">Get in touch: haanmusic00@gmail.com</p>
       </div>
     </div>
   );
@@ -436,10 +437,12 @@ function DiscographyPage({ onBack }: { onBack: () => void }) {
 export function EyeCard() {
   const [activeCard, setActiveCard] = useState<CardType>("main");
   const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [cardOffset, setCardOffset] = useState(0);
   const [mainCardHeight, setMainCardHeight] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
   const mainCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -462,36 +465,69 @@ export function EyeCard() {
 
   const onTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
     const clientX = 'touches' in e ? e.touches[0].clientX : ('clientX' in e ? e.clientX : 0);
+    const clientY = 'touches' in e ? e.touches[0].clientY : ('clientY' in e ? e.clientY : 0);
     setTouchEnd(null);
     setTouchStart(clientX);
+    setTouchStartY(clientY);
+    setIsScrolling(false);
   };
 
   const onTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
-    if (!touchStart) return;
+    if (!touchStart || !touchStartY) return;
     const clientX = 'touches' in e ? e.touches[0]?.clientX : ('clientX' in e ? e.clientX : 0);
-    if (!clientX) return;
-    setTouchEnd(clientX);
+    const clientY = 'touches' in e ? e.touches[0]?.clientY : ('clientY' in e ? e.clientY : 0);
+    if (!clientX || !clientY) return;
     
-    // Only allow swipe on mobile (touch devices)
-    if ('touches' in e) {
-      const diff = clientX - touchStart;
-      if (activeCard === "main" && diff < 0) {
-        setCardOffset(Math.max(diff, -100));
-      } else if (activeCard === "bio" && diff > 0) {
-        setCardOffset(Math.min(diff, 100));
-      } else if (activeCard === "bio" && diff < 0) {
-        setCardOffset(Math.max(diff, -100));
-      } else if (activeCard === "info" && diff > 0) {
-        setCardOffset(Math.min(diff, 100));
-      } else if (activeCard === "info" && diff < 0) {
-        setCardOffset(Math.max(diff, -100));
-      } else if (activeCard === "discography" && diff > 0) {
-        setCardOffset(Math.min(diff, 100));
+    const diffX = Math.abs(clientX - touchStart);
+    const diffY = Math.abs(clientY - touchStartY);
+    
+    // If already determined to be scrolling, don't process as swipe
+    if (isScrolling) return;
+    
+    // If vertical movement is significantly greater, user is scrolling - don't swipe card
+    // Use a 1.5:1 ratio to favor vertical scrolling
+    if (diffY > diffX * 1.5 && diffY > 10) {
+      setIsScrolling(true);
+      setCardOffset(0);
+      return;
+    }
+    
+    // Only start treating as horizontal swipe if horizontal movement is clearly dominant
+    // Require horizontal to be at least 1.5x vertical and at least 15px
+    if (diffX > diffY * 1.5 && diffX > 15) {
+      setTouchEnd(clientX);
+      
+      // Only allow swipe on mobile (touch devices)
+      if ('touches' in e) {
+        const diff = clientX - touchStart;
+        if (activeCard === "main" && diff < 0) {
+          setCardOffset(Math.max(diff, -100));
+        } else if (activeCard === "bio" && diff > 0) {
+          setCardOffset(Math.min(diff, 100));
+        } else if (activeCard === "bio" && diff < 0) {
+          setCardOffset(Math.max(diff, -100));
+        } else if (activeCard === "info" && diff > 0) {
+          setCardOffset(Math.min(diff, 100));
+        } else if (activeCard === "info" && diff < 0) {
+          setCardOffset(Math.max(diff, -100));
+        } else if (activeCard === "discography" && diff > 0) {
+          setCardOffset(Math.min(diff, 100));
+        }
       }
     }
   };
 
   const onTouchEnd = () => {
+    // If user was scrolling, don't process as card swipe
+    if (isScrolling) {
+      setCardOffset(0);
+      setTouchStart(null);
+      setTouchStartY(null);
+      setTouchEnd(null);
+      setIsScrolling(false);
+      return;
+    }
+    
     if (!touchStart || !touchEnd) {
       setCardOffset(0);
       return;
@@ -522,7 +558,9 @@ export function EyeCard() {
 
     setCardOffset(0);
     setTouchStart(null);
+    setTouchStartY(null);
     setTouchEnd(null);
+    setIsScrolling(false);
   };
 
   return (
@@ -615,7 +653,10 @@ export function EyeCard() {
         }}
       >
         <div className="flex flex-col relative w-full" style={{ height: isMobile ? '100%' : 'auto', maxHeight: isMobile ? '85vh' : 'none' }}>
-          <div className="flex flex-col items-start justify-start px-[18px] pt-[18px] pb-[18px] sm:px-[50px] sm:pt-[40px] sm:pb-[50px] h-full min-h-0 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div 
+            className="flex flex-col items-start justify-start px-[18px] pt-[18px] pb-[18px] sm:px-[50px] sm:pt-[40px] sm:pb-[50px] h-full min-h-0 overflow-y-auto" 
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             <BioPage />
           </div>
         </div>
@@ -653,7 +694,10 @@ export function EyeCard() {
         }}
       >
         <div className="flex flex-col relative w-full overflow-hidden" style={{ maxHeight: '85vh', height: '100%' }}>
-          <div className="flex flex-col items-start justify-start px-[18px] pt-[18px] pb-[18px] sm:px-[24px] sm:pt-[24px] sm:pb-[24px] overflow-y-auto h-full min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div 
+            className="flex flex-col items-start justify-start px-[18px] pt-[18px] pb-[18px] sm:px-[24px] sm:pt-[24px] sm:pb-[24px] overflow-y-auto h-full min-h-0" 
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             <InfoPage />
           </div>
         </div>
@@ -688,7 +732,10 @@ export function EyeCard() {
         }}
       >
         <div className="flex flex-col relative w-full overflow-hidden" style={{ maxHeight: '85vh', height: '100%' }}>
-          <div className="flex flex-col items-start justify-start px-[18px] pt-[18px] pb-[18px] w-full h-full overflow-y-auto min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div 
+            className="flex flex-col items-start justify-start px-[18px] pt-[18px] pb-[18px] w-full h-full overflow-y-auto min-h-0" 
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             <DiscographyPage onBack={() => setActiveCard("main")} />
           </div>
         </div>
